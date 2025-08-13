@@ -1,36 +1,170 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Book Catalog App
 
-## Getting Started
+Hey! This is my first full-stack project using Next.js, TypeScript, and PostgreSQL. I built a book catalog app where users can add, view, edit, and delete books. It also has user authentication with email/password and Google login.
 
-First, run the development server:
+## What I Used
 
+- **Frontend**: Next.js 15 with App Router + TypeScript
+- **Styling**: Tailwind CSS (my first time using it!)
+- **Database**: PostgreSQL with Prisma ORM
+- **Auth**: NextAuth.js for user login
+- **Hosting**: Vercel (super easy to deploy)
+
+## Features I Built
+
+### Basic Stuff
+- ✅ View all books in a nice list
+- ✅ Add new books with title, author, and genre
+- ✅ Delete books (one by one or multiple at once)
+- ✅ Edit existing books
+- ✅ Switch between grid view (table) and card view
+
+### Cool Features
+- ✅ User login with email/password
+- ✅ Google OAuth login (took me a while to figure this out!)
+- ✅ Protected pages (can't add books without logging in)
+- ✅ Responsive design (works on mobile and desktop)
+- ✅ Loading states and error messages
+
+## How to Run This Locally
+
+### Step 1: Clone and Install
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <your-repo-url>
+cd book-catalog
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Step 2: Set Up Database
+I used Neon (free PostgreSQL hosting) but you can use Supabase or ElephantSQL too.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Go to [Neon](https://neon.tech) and create a free account
+2. Create a new project and get your database URL
+3. Copy the `.env.example` file to `.env.local`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Step 3: Environment Variables
+Create a `.env.local` file in the root folder:
 
-## Learn More
+```bash
+# Database connection
+DATABASE_URL="postgresql://username:password@host:port/database"
 
-To learn more about Next.js, take a look at the following resources:
+# NextAuth secret (generate with: openssl rand -base64 32)
+NEXTAUTH_SECRET="your-secret-here"
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Google OAuth (optional - only if you want Google login)
+GOOGLE_CLIENT_ID="your-google-client-id"
+GOOGLE_CLIENT_SECRET="your-google-client-secret"
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# App URL
+NEXT_PUBLIC_BASE_URL="http://localhost:3000"
+NEXTAUTH_URL="http://localhost:3000"
+```
 
-## Deploy on Vercel
+### Step 4: Database Setup
+```bash
+# Generate Prisma client
+npx prisma generate
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# Push schema to database
+npx prisma db push
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# (Optional) Open Prisma Studio to see your data
+npx prisma studio
+```
+
+### Step 5: Create a Test User
+Since I didn't build a signup page, you need to create a user manually:
+
+```bash
+# Run this script to create a test user
+node scripts/create-user.js
+```
+
+Or use Prisma Studio to add a user with a hashed password.
+
+### Step 6: Run the App
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser!
+
+## How Authentication Works
+
+### Login Flow
+1. User goes to `/auth/signin`
+2. They can either:
+   - Enter email/password (stored in our database)
+   - Click "Sign in with Google" (OAuth)
+3. If successful, they get redirected to the home page
+4. The navbar shows their name and a logout button
+
+### Protected Routes
+- `/add` page is protected - you need to be logged in
+- If you try to access it without login, you get redirected to signin
+- I used NextAuth middleware for this
+
+### Session Management
+- NextAuth handles all the session stuff
+- Users stay logged in until they click logout
+- Session data is stored in JWT tokens
+
+## API Endpoints I Built
+
+- `GET /api/books` - Get all books
+- `POST /api/books` - Add a new book (requires login)
+- `PUT /api/books/[id]` - Update a book
+- `DELETE /api/books/[id]` - Delete a book
+
+## Deployment
+
+### GitHub
+1. Push your code to GitHub
+2. Make sure your `.env.local` is in `.gitignore`
+
+### Vercel
+1. Go to [Vercel](https://vercel.com) and sign up
+2. Import your GitHub repo
+3. Add these environment variables in Vercel:
+   - `DATABASE_URL`
+   - `NEXTAUTH_SECRET`
+   - `GOOGLE_CLIENT_ID` (if using Google auth)
+   - `GOOGLE_CLIENT_SECRET` (if using Google auth)
+   - `NEXTAUTH_URL` (your Vercel domain)
+   - `NEXT_PUBLIC_BASE_URL` (your Vercel domain)
+
+4. Deploy! Vercel will automatically build and deploy your app.
+
+## What I Learned
+
+- **Next.js App Router**: Much better than the old pages router
+- **Prisma**: Database operations are so much easier now
+- **NextAuth**: Authentication is complicated but powerful
+- **TypeScript**: Type safety is amazing once you get used to it
+- **Tailwind CSS**: Utility-first CSS is the way to go
+- **PostgreSQL**: My first time using a real database!
+
+## Struggles I Had
+
+- Getting Google OAuth to work (those environment variables!)
+- Understanding how NextAuth sessions work
+- Making the UI responsive (mobile is tricky)
+- Database relationships and Prisma queries
+- Deployment environment variables
+
+## Future Improvements
+
+- [ ] User registration page
+- [ ] Book categories and search
+- [ ] User profiles and book collections
+- [ ] Better error handling
+- [ ] Unit tests (I should learn testing!)
+
+## Contact
+
+This is my first big project, so feedback is welcome! I'm still learning and would love to hear how I can improve.
+
+---
+
+*Built with ❤️ and lots of coffee during my final semester*

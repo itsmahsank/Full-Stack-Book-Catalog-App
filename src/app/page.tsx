@@ -1,103 +1,256 @@
-import Image from "next/image";
+"use client";
 
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import ViewToggle from "@/components/ViewToggle";
+import BookGrid from "@/components/BookGrid";
+import BookCards from "@/components/BookCards";
+import EditBookModal from "@/components/EditBookModal";
+import { useSession, signIn } from "next-auth/react";
+
+// Book data structure
+interface Book {
+  id: string;
+  title: string;
+  author: string;
+  genre: string;
+}
+
+// Main page component for the book catalog
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  // State variables to manage the component
+  const [books, setBooks] = useState<Book[]>([]);           // List of all books
+  const [loading, setLoading] = useState(true);             // Loading state while fetching books
+  const [view, setView] = useState<'grid' | 'card'>('card'); // Current view mode (grid or card)
+  const [selectedBooks, setSelectedBooks] = useState<string[]>([]); // IDs of selected books
+  const [editingBook, setEditingBook] = useState<Book | null>(null); // Book being edited
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false); // Whether edit modal is open
+  const { status } = useSession();
+  const isAuthenticated = status === "authenticated";
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  // Fetch books when component first loads
+  useEffect(() => {
+    fetchBooks();
+  }, []);
+
+  // Function to get all books from the API
+  async function fetchBooks() {
+    try {
+      const res = await fetch('/api/books');
+      if (!res.ok) throw new Error("Failed to fetch");
+      const data = await res.json();
+      setBooks(data);
+    } catch (error) {
+      console.error("Error fetching books:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Handle checkbox selection changes
+  const handleSelectionChange = (bookId: string, selected: boolean) => {
+    if (selected) {
+      // Add book to selected list
+      setSelectedBooks(prev => [...prev, bookId]);
+    } else {
+      // Remove book from selected list
+      setSelectedBooks(prev => prev.filter(id => id !== bookId));
+    }
+  };
+
+  // Handle bulk delete of selected books
+  const handleBulkDelete = async () => {
+    if (selectedBooks.length === 0) return;
+
+    if (!isAuthenticated) {
+      await signIn(undefined, { callbackUrl: '/' });
+      return;
+    }
+    
+    // Ask user to confirm deletion
+    const confirmed = confirm(`Are you sure you want to delete ${selectedBooks.length} selected book(s)?`);
+    if (!confirmed) return;
+
+    try {
+      // Delete each selected book one by one
+      for (const bookId of selectedBooks) {
+        const res = await fetch(`/api/books/${bookId}`, { method: "DELETE" });
+        if (res.status === 401) {
+          await signIn(undefined, { callbackUrl: '/' });
+          return;
+        }
+      }
+      
+      // Clear selection and refresh book list
+      setSelectedBooks([]);
+      fetchBooks();
+    } catch (error) {
+      console.error("Error deleting books:", error);
+      alert("Failed to delete some books");
+    }
+  };
+
+  // Handle edit button click
+  const handleEdit = (book: Book) => {
+    if (!isAuthenticated) {
+      signIn(undefined, { callbackUrl: '/' });
+      return;
+    }
+    setEditingBook(book);
+    setIsEditModalOpen(true);
+  };
+
+  // Handle save after editing
+  const handleEditSave = (updatedBook: Book) => {
+    // Update the book in the local state
+    setBooks(prev => prev.map(book => 
+      book.id === updatedBook.id ? updatedBook : book
+    ));
+    
+    // Close the modal
+    setEditingBook(null);
+    setIsEditModalOpen(false);
+  };
+
+  // Handle closing the edit modal
+  const handleEditClose = () => {
+    setEditingBook(null);
+    setIsEditModalOpen(false);
+  };
+
+  // Handle delete button click for individual books
+  const handleDelete = async (bookId: string) => {
+    if (!isAuthenticated) {
+      await signIn(undefined, { callbackUrl: '/' });
+      return;
+    }
+
+    // Ask user to confirm deletion
+    const confirmed = confirm("Are you sure you want to delete this book?");
+    if (!confirmed) return;
+
+    try {
+      // Send delete request to API
+      const res = await fetch(`/api/books/${bookId}`, { method: "DELETE" });
+      if (res.status === 401) {
+        await signIn(undefined, { callbackUrl: '/' });
+        return;
+      }
+      if (!res.ok) throw new Error("Failed to delete book");
+      
+      // Refresh the book list
+      fetchBooks();
+    } catch (error) {
+      console.error("Error deleting book:", error);
+      alert("Failed to delete book");
+    }
+  };
+
+  // Show loading message while fetching books
+  if (loading) {
+    return (
+      <div className="max-w-6xl mx-auto px-4 py-6">
+        <div className="text-center py-8">
+          <p className="text-gray-500">Loading books...</p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-6xl mx-auto px-4 py-6">
+      
+      {/* Page Header */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-800 mb-2">My Books</h1>
+        <p className="text-gray-600 mb-4">A simple collection of my favorite books</p>
+      </div>
+
+      {/* Main Content */}
+      {books.length > 0 ? (
+        <div className="space-y-4">
+          
+          {/* Control Bar - View Toggle and Bulk Delete */}
+          <div className="flex items-center justify-between">
+            {/* Left side: Add Book button and Bulk Delete */}
+            <div className="flex items-center space-x-4">
+              {/* Add Book Button */}
+              <Link 
+                href={isAuthenticated ? "/add" : "/auth/signin?callbackUrl=%2Fadd"}
+                onClick={(e) => {
+                  if (!isAuthenticated) {
+                    // Let the link handle redirect to signin with callback
+                  }
+                }}
+                className={`inline-block px-4 py-2 rounded text-white ${isAuthenticated ? 'bg-indigo-500 hover:bg-indigo-600' : 'bg-indigo-400'}`}
+              >
+                Add Book
+              </Link>
+              
+              {/* Bulk Delete Button - disabled when no selection or not authenticated */}
+              <button
+                onClick={handleBulkDelete}
+                disabled={selectedBooks.length === 0 || !isAuthenticated}
+                className={`px-4 py-2 rounded text-sm transition-colors ${
+                  selectedBooks.length > 0 && isAuthenticated
+                    ? 'bg-red-500 hover:bg-red-600 text-white cursor-pointer'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                Delete Selected ({selectedBooks.length})
+              </button>
+            </div>
+            
+            {/* Right side: View Toggle */}
+            <ViewToggle view={view} onViewChange={setView} />
+          </div>
+
+          {/* Grid View */}
+          <div className={`transition-all duration-300 ${view === 'grid' ? 'opacity-100' : 'opacity-0'}`}>
+            {view === 'grid' && (
+              <BookGrid
+                books={books}
+                selectedBooks={selectedBooks}
+                onSelectionChange={handleSelectionChange}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
+            )}
+          </div>
+
+          {/* Card View */}
+          <div className={`transition-all duration-300 ${view === 'card' ? 'opacity-100' : 'opacity-0'}`}>
+            {view === 'card' && (
+              <BookCards
+                books={books}
+                selectedBooks={selectedBooks}
+                onSelectionChange={handleSelectionChange}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
+            )}
+          </div>
+        </div>
+      ) : (
+        /* Empty State - when no books exist */
+        <div className="text-center py-8">
+          <p className="text-gray-500 mb-4">No books added yet.</p>
+          <Link 
+            href={isAuthenticated ? "/add" : "/auth/signin?callbackUrl=%2Fadd"}
+            className="text-indigo-500 hover:underline"
+          >
+            Add your first book
+          </Link>
+        </div>
+      )}
+
+      {/* Edit Book Modal */}
+      <EditBookModal
+        book={editingBook}
+        isOpen={isEditModalOpen}
+        onClose={handleEditClose}
+        onSave={handleEditSave}
+      />
     </div>
   );
 }
