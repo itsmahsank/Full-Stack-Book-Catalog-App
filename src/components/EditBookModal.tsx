@@ -56,11 +56,16 @@ export default function EditBookModal({ book, isOpen, onClose, onSave }: EditBoo
 
     try {
       // Send PUT request to update the book
+      console.log("Attempting to update book:", { id: book.id, title, author, genre });
       const res = await fetch(`/api/books/${book.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title, author, genre }),
       });
+
+      console.log("Update book response status:", res.status);
+      const responseText = await res.text();
+      console.log("Update book response:", responseText);
 
       if (!res.ok) throw new Error("Failed to update book");
 
@@ -69,6 +74,7 @@ export default function EditBookModal({ book, isOpen, onClose, onSave }: EditBoo
       onClose();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Something went wrong";
+      console.error("Update book error:", err);
       setError(message);
     } finally {
       setLoading(false);

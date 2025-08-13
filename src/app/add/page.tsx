@@ -21,16 +21,20 @@ export default function AddBookPage() {
     }
     setLoading(true);
     try {
+      console.log("Attempting to add book:", { title, author, genre });
       const res = await fetch("/api/books", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title, author, genre }),
       });
+      console.log("Add book response status:", res.status);
+      console.log("Add book response:", await res.text());
       if (!res.ok) throw new Error("Failed to add book");
       router.push("/");
       router.refresh();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Something went wrong";
+      console.error("Add book error:", err);
       setError(message);
     } finally {
       setLoading(false);
