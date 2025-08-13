@@ -1,16 +1,59 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useSession, signIn } from "next-auth/react";
 
 export default function AddBookPage() {
   const router = useRouter();
+  const { status, data: session } = useSession();
+  const isAuthenticated = status === "authenticated";
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
   const [genre, setGenre] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Debug logging
+  useEffect(() => {
+    console.log("Add page - Session status:", status);
+    console.log("Add page - Session data:", session);
+    console.log("Add page - Is authenticated:", isAuthenticated);
+  }, [status, session, isAuthenticated]);
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      console.log("Add page - Redirecting to signin");
+      signIn(undefined, { callbackUrl: '/add' });
+    }
+  }, [status]);
+
+  // Show loading while checking session
+  if (status === "loading") {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-6">
+        <div className="text-center py-8">
+          <p className="text-gray-500">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show message if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-6">
+        <div className="text-center py-8">
+          <p className="text-gray-500">Please sign in to add books.</p>
+          <Link href="/auth/signin" className="text-indigo-500 hover:underline">
+            Sign In
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -28,7 +71,8 @@ export default function AddBookPage() {
         body: JSON.stringify({ title, author, genre }),
       });
       console.log("Add book response status:", res.status);
-      console.log("Add book response:", await res.text());
+      const responseText = await res.text();
+      console.log("Add book response:", responseText);
       if (!res.ok) throw new Error("Failed to add book");
       router.push("/");
       router.refresh();
