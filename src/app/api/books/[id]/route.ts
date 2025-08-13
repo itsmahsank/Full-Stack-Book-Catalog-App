@@ -31,10 +31,10 @@ export async function PUT(
     console.log("Book owner ID:", existing.ownerId);
     console.log("Ownership check:", existing.ownerId && existing.ownerId !== session.user.id);
     
-    // Allow editing if user is authenticated (for existing books without ownerId)
-    if (existing.ownerId && existing.ownerId !== session.user.id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+    // Allow editing for any authenticated user (removed ownership restriction)
+    // if (existing.ownerId && existing.ownerId !== session.user.id) {
+    //   return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    // }
 
     // Get the request body (updated book data)
     const body = await request.json();
@@ -93,11 +93,11 @@ export async function DELETE(
     console.log("DELETE - Book owner ID:", existing.ownerId);
     console.log("DELETE - Ownership check:", existing.ownerId && existing.ownerId !== session.user.id);
     
-    // Allow deleting if user is authenticated (for existing books without ownerId)
-    if (existing.ownerId && existing.ownerId !== session.user.id) {
-      console.log("DELETE - Forbidden, user doesn't own the book");
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+    // Allow deleting for any authenticated user (removed ownership restriction)
+    // if (existing.ownerId && existing.ownerId !== session.user.id) {
+    //   console.log("DELETE - Forbidden, user doesn't own the book");
+    //   return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    // }
 
     // Delete the book from the database
     console.log("DELETE - Deleting book from database...");
