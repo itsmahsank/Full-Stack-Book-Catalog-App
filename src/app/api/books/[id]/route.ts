@@ -25,6 +25,7 @@ export async function PUT(
     if (!existing) {
       return NextResponse.json({ error: "Book not found" }, { status: 404 });
     }
+    // Allow editing if user is authenticated (for existing books without ownerId)
     if (existing.ownerId && existing.ownerId !== session.user.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -74,6 +75,7 @@ export async function DELETE(
     if (!existing) {
       return NextResponse.json({ error: "Book not found" }, { status: 404 });
     }
+    // Allow deleting if user is authenticated (for existing books without ownerId)
     if (existing.ownerId && existing.ownerId !== session.user.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
