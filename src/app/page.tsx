@@ -43,9 +43,12 @@ export default function Home() {
   // Function to get all books from the API
   async function fetchBooks() {
     try {
+      console.log("Fetching books from API...");
       const res = await fetch('/api/books');
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
+      console.log("Fetched books:", data);
+      console.log("Number of books fetched:", data.length);
       setBooks(data);
     } catch (error) {
       console.error("Error fetching books:", error);
@@ -132,6 +135,9 @@ export default function Home() {
       return;
     }
 
+    console.log("Attempting to delete book:", bookId);
+    console.log("Current books count:", books.length);
+
     // Ask user to confirm deletion
     const confirmed = confirm("Are you sure you want to delete this book?");
     if (!confirmed) return;
@@ -139,14 +145,23 @@ export default function Home() {
     try {
       // Send delete request to API
       const res = await fetch(`/api/books/${bookId}`, { method: "DELETE" });
+      console.log("Delete response status:", res.status);
+      
       if (res.status === 401) {
         await signIn(undefined, { callbackUrl: '/' });
         return;
       }
       if (!res.ok) throw new Error("Failed to delete book");
       
+      console.log("Book deleted successfully, refreshing list...");
+      
+      // Clear any selected books that might include the deleted one
+      setSelectedBooks(prev => prev.filter(id => id !== bookId));
+      
       // Refresh the book list
-      fetchBooks();
+      await fetchBooks();
+      
+      console.log("Books list refreshed, new count:", books.length);
     } catch (error) {
       console.error("Error deleting book:", error);
       alert("Failed to delete book");

@@ -65,20 +65,26 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    console.log("DELETE request received");
     const session = await getServerSession(authOptions);
     if (!session || !session.user?.id) {
+      console.log("DELETE - Unauthorized, no session or user ID");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Get the book ID from the URL parameters
     const { id } = await params;
     if (!id) {
+      console.log("DELETE - Missing book ID");
       return NextResponse.json({ error: "Missing book ID" }, { status: 400 });
     }
+
+    console.log("DELETE - Attempting to delete book with ID:", id);
 
     // Ensure user owns the book (if ownership is tracked)
     const existing = await prisma.book.findUnique({ where: { id } });
     if (!existing) {
+      console.log("DELETE - Book not found with ID:", id);
       return NextResponse.json({ error: "Book not found" }, { status: 404 });
     }
     
@@ -89,11 +95,14 @@ export async function DELETE(
     
     // Allow deleting if user is authenticated (for existing books without ownerId)
     if (existing.ownerId && existing.ownerId !== session.user.id) {
+      console.log("DELETE - Forbidden, user doesn't own the book");
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     // Delete the book from the database
+    console.log("DELETE - Deleting book from database...");
     await prisma.book.delete({ where: { id } });
+    console.log("DELETE - Book successfully deleted from database");
     
     // Return success message
     return NextResponse.json({ success: true });
