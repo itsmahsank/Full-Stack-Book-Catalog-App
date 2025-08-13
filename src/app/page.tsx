@@ -25,8 +25,15 @@ export default function Home() {
   const [selectedBooks, setSelectedBooks] = useState<string[]>([]); // IDs of selected books
   const [editingBook, setEditingBook] = useState<Book | null>(null); // Book being edited
   const [isEditModalOpen, setIsEditModalOpen] = useState(false); // Whether edit modal is open
-  const { status } = useSession();
+  const { status, data: session } = useSession();
   const isAuthenticated = status === "authenticated";
+
+  // Debug logging
+  useEffect(() => {
+    console.log("Session status:", status);
+    console.log("Session data:", session);
+    console.log("Is authenticated:", isAuthenticated);
+  }, [status, session, isAuthenticated]);
 
   // Fetch books when component first loads
   useEffect(() => {
