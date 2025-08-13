@@ -1,7 +1,6 @@
-export { default } from "next-auth/middleware";
-
+// Middleware disabled - handling authentication on client side
 export const config = {
-  matcher: ["/add"],
+  matcher: [],
 };
 
 

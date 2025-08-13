@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useSession, signIn } from "next-auth/react";
+import { useSession } from "next-auth/react";
 
 export default function AddBookPage() {
   const router = useRouter();
@@ -22,14 +22,6 @@ export default function AddBookPage() {
     console.log("Add page - Is authenticated:", isAuthenticated);
   }, [status, session, isAuthenticated]);
 
-  // Redirect if not authenticated
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      console.log("Add page - Redirecting to signin");
-      signIn(undefined, { callbackUrl: '/add' });
-    }
-  }, [status]);
-
   // Show loading while checking session
   if (status === "loading") {
     return (
@@ -46,8 +38,12 @@ export default function AddBookPage() {
     return (
       <div className="max-w-2xl mx-auto px-4 py-6">
         <div className="text-center py-8">
-          <p className="text-gray-500">Please sign in to add books.</p>
-          <Link href="/auth/signin" className="text-indigo-500 hover:underline">
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">Sign In Required</h1>
+          <p className="text-gray-600 mb-6">You need to sign in to add books.</p>
+          <Link 
+            href="/auth/signin?callbackUrl=%2Fadd" 
+            className="bg-indigo-500 hover:bg-indigo-600 text-white px-6 py-2 rounded"
+          >
             Sign In
           </Link>
         </div>
