@@ -1,14 +1,18 @@
 # Book Catalog App
 
-Hey! This is my first full-stack project using Next.js, TypeScript, and PostgreSQL. I built a book catalog app where users can add, view, edit, and delete books. It also has user authentication with email/password and Google login.
+Hey! This is my full-stack project using Next.js, TypeScript, and PostgreSQL. I built a book catalog app where users can add, view, edit, and delete books. It also has user authentication with email/password and Google login.
+
+#test user 
+    test@example.com
+    Password123!
 
 ## What I Used
 
 - **Frontend**: Next.js 15 with App Router + TypeScript
-- **Styling**: Tailwind CSS (my first time using it!)
+- **Styling**: Tailwind CSS 
 - **Database**: PostgreSQL with Prisma ORM
 - **Auth**: NextAuth.js for user login
-- **Hosting**: Vercel (super easy to deploy)
+- **Hosting**: Vercel 
 
 ## Features I Built
 
@@ -19,7 +23,7 @@ Hey! This is my first full-stack project using Next.js, TypeScript, and PostgreS
 - ✅ Edit existing books
 - ✅ Switch between grid view (table) and card view
 
-### Cool Features
+### Features
 - ✅ User login with email/password
 - ✅ Google OAuth login (took me a while to figure this out!)
 - ✅ Protected pages (can't add books without logging in)
@@ -159,12 +163,4 @@ Open [http://localhost:3000](http://localhost:3000) in your browser!
 - [ ] Book categories and search
 - [ ] User profiles and book collections
 - [ ] Better error handling
-- [ ] Unit tests (I should learn testing!)
-
-## Contact
-
-This is my first big project, so feedback is welcome! I'm still learning and would love to hear how I can improve.
-
----
-
-*Built with ❤️ and lots of coffee during my final semester*
+- [ ] Unit tests

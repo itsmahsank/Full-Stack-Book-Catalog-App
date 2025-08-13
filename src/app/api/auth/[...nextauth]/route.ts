@@ -4,6 +4,8 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcrypt";
+import type { User as NextAuthUser } from "next-auth";
+import type { JWT } from "next-auth/jwt";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -28,7 +30,14 @@ export const authOptions: NextAuthOptions = {
         if (!user?.password) return null;
         const isValid = await bcrypt.compare(password, user.password);
         if (!isValid) return null;
-        return { id: user.id, name: user.name ?? null, email: user.email ?? null, image: user.image ?? null } as any;
+        // Return a minimal NextAuth user shape; NextAuth augments it into the JWT
+        const authUser: NextAuthUser = {
+          id: user.id,
+          name: user.name ?? null,
+          email: user.email ?? null,
+          image: user.image ?? null,
+        };
+        return authUser;
       },
     }),
   ],
@@ -36,9 +45,9 @@ export const authOptions: NextAuthOptions = {
     signIn: "/auth/signin",
   },
   callbacks: {
-    async session({ session, token }) {
+    async session({ session, token }: { session: import("next-auth").Session; token: JWT }) {
       if (session.user && token.sub) {
-        session.user.id = token.sub;
+        (session.user as { id?: string }).id = token.sub;
       }
       return session;
     },

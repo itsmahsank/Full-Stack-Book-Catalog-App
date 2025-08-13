@@ -67,8 +67,9 @@ export default function EditBookModal({ book, isOpen, onClose, onSave }: EditBoo
       // Call the onSave function with updated book data
       onSave({ ...book, title, author, genre });
       onClose();
-    } catch (err: any) {
-      setError(err.message ?? "Something went wrong");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Something went wrong";
+      setError(message);
     } finally {
       setLoading(false);
     }

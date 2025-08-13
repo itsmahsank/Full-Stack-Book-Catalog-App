@@ -177,7 +177,7 @@ export default function Home() {
               {/* Add Book Button */}
               <Link 
                 href={isAuthenticated ? "/add" : "/auth/signin?callbackUrl=%2Fadd"}
-                onClick={(e) => {
+                onClick={() => {
                   if (!isAuthenticated) {
                     // Let the link handle redirect to signin with callback
                   }

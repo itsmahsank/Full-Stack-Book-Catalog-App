@@ -29,8 +29,9 @@ export default function AddBookPage() {
       if (!res.ok) throw new Error("Failed to add book");
       router.push("/");
       router.refresh();
-    } catch (err: any) {
-      setError(err.message ?? "Something went wrong");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Something went wrong";
+      setError(message);
     } finally {
       setLoading(false);
     }
