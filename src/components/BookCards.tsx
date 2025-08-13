@@ -54,7 +54,14 @@ export default function BookCards({ books, selectedBooks, onSelectionChange, onE
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {/* Map through each book and create a card */}
       {books.map((book) => (
-        <div key={book.id} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200 relative">
+        <div 
+          key={book.id} 
+          className={`border rounded-lg p-4 transition-all duration-200 relative ${
+            selectedBooks.includes(book.id)
+              ? 'bg-indigo-50 border-indigo-500 shadow-md'
+              : 'bg-white border-gray-200 hover:shadow-md'
+          }`}
+        >
           
           {/* Top row: Checkbox and Action Menu */}
           <div className="flex items-start justify-between mb-3">

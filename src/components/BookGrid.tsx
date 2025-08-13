@@ -15,12 +15,13 @@ interface BookGridProps {
   books: Book[];                    // List of books to display
   selectedBooks: string[];          // IDs of currently selected books
   onSelectionChange: (bookId: string, selected: boolean) => void;  // Handle checkbox changes
+  onSelectAllOnPage: (selected: boolean) => void;  // Handle select all on current page
   onEdit: (book: Book) => void;    // Handle edit button click
   onDelete: (bookId: string) => void;  // Handle delete button click
 }
 
 // Grid view component - shows books in a table format
-export default function BookGrid({ books, selectedBooks, onSelectionChange, onEdit, onDelete }: BookGridProps) {
+export default function BookGrid({ books, selectedBooks, onSelectionChange, onSelectAllOnPage, onEdit, onDelete }: BookGridProps) {
   // Track which dropdown is currently open
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
@@ -61,13 +62,8 @@ export default function BookGrid({ books, selectedBooks, onSelectionChange, onEd
               <th className="px-4 py-3 text-left">
                 <input
                   type="checkbox"
-                  checked={selectedBooks.length === books.length && books.length > 0}
-                  onChange={(e) => {
-                    // Select/deselect all books
-                    books.forEach(book => {
-                      onSelectionChange(book.id, e.target.checked);
-                    });
-                  }}
+                  checked={books.length > 0 && books.every(book => selectedBooks.includes(book.id))}
+                  onChange={(e) => onSelectAllOnPage(e.target.checked)}
                   className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                 />
               </th>
@@ -81,7 +77,14 @@ export default function BookGrid({ books, selectedBooks, onSelectionChange, onEd
           {/* Table Body */}
           <tbody className="divide-y divide-gray-200">
             {books.map((book) => (
-              <tr key={book.id} className="hover:bg-gray-50 transition-colors">
+              <tr 
+                key={book.id} 
+                className={`transition-colors ${
+                  selectedBooks.includes(book.id)
+                    ? 'bg-indigo-50 border-l-4 border-indigo-500'
+                    : 'hover:bg-gray-50'
+                }`}
+              >
                 {/* Individual Book Checkbox */}
                 <td className="px-4 py-3">
                   <input

@@ -25,8 +25,24 @@ export default function Home() {
   const [selectedBooks, setSelectedBooks] = useState<string[]>([]); // IDs of selected books
   const [editingBook, setEditingBook] = useState<Book | null>(null); // Book being edited
   const [isEditModalOpen, setIsEditModalOpen] = useState(false); // Whether edit modal is open
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [booksPerPage] = useState(10); // Show 10 books per page
+  
   const { status, data: session } = useSession();
   const isAuthenticated = status === "authenticated";
+
+  // Calculate pagination
+  const indexOfLastBook = currentPage * booksPerPage;
+  const indexOfFirstBook = indexOfLastBook - booksPerPage;
+  const currentBooks = books.slice(indexOfFirstBook, indexOfLastBook);
+  const totalPages = Math.ceil(books.length / booksPerPage);
+
+  // Reset to first page when books change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [books.length]);
 
   // Debug logging
   useEffect(() => {
@@ -65,6 +81,19 @@ export default function Home() {
     } else {
       // Remove book from selected list
       setSelectedBooks(prev => prev.filter(id => id !== bookId));
+    }
+  };
+
+  // Handle select all on current page
+  const handleSelectAllOnPage = (selected: boolean) => {
+    if (selected) {
+      // Add all current page books to selection
+      const currentPageBookIds = currentBooks.map(book => book.id);
+      setSelectedBooks(prev => [...new Set([...prev, ...currentPageBookIds])]);
+    } else {
+      // Remove all current page books from selection
+      const currentPageBookIds = currentBooks.map(book => book.id);
+      setSelectedBooks(prev => prev.filter(id => !currentPageBookIds.includes(id)));
     }
   };
 
@@ -231,9 +260,10 @@ export default function Home() {
           <div className={`transition-all duration-300 ${view === 'grid' ? 'opacity-100' : 'opacity-0'}`}>
             {view === 'grid' && (
               <BookGrid
-                books={books}
+                books={currentBooks}
                 selectedBooks={selectedBooks}
                 onSelectionChange={handleSelectionChange}
+                onSelectAllOnPage={handleSelectAllOnPage}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
               />
@@ -244,7 +274,7 @@ export default function Home() {
           <div className={`transition-all duration-300 ${view === 'card' ? 'opacity-100' : 'opacity-0'}`}>
             {view === 'card' && (
               <BookCards
-                books={books}
+                books={currentBooks}
                 selectedBooks={selectedBooks}
                 onSelectionChange={handleSelectionChange}
                 onEdit={handleEdit}
@@ -252,6 +282,52 @@ export default function Home() {
               />
             )}
           </div>
+
+          {/* Pagination */}
+          {books.length > booksPerPage && (
+            <div className="flex items-center justify-between mt-6">
+              {/* Pagination Info */}
+              <div className="text-sm text-gray-600">
+                Showing {indexOfFirstBook + 1}-{Math.min(indexOfLastBook, books.length)} of {books.length} records
+              </div>
+              
+              {/* Pagination Controls */}
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 text-sm border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                >
+                  Previous
+                </button>
+                
+                {/* Page Numbers */}
+                <div className="flex items-center space-x-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`px-3 py-1 text-sm border rounded ${
+                        currentPage === page
+                          ? 'bg-indigo-500 text-white border-indigo-500'
+                          : 'border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+                
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1 text-sm border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         /* Empty State - when no books exist */
